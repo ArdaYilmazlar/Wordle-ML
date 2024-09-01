@@ -56,7 +56,7 @@ class WordleEnv(gym.Env):
                 reward -= 0.1  # Smaller penalty for absent letters to not be too discouraging
         
         # Penalty for the number of guesses made so far (encourages faster guessing)
-        reward -= len(self.guess_status_history) * 0.1
+        reward -= len(self.guess_status_history) * 0.2
         
         # Large reward for guessing the entire word correctly, scaled by how quickly it was found
         if all(status == GuessStatus.CORRECT.value for _, status in result):

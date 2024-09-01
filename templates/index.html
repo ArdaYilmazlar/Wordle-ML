@@ -3,48 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle Game</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Wordle Model Visualization</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .guess { font-weight: bold; }
+        .correct { color: green; }
+        .present { color: orange; }
+        .absent { color: red; }
+        .letter { margin-right: 5px; }
+    </style>
 </head>
 <body>
-    <h1>Wordle Game</h1>
-    <div id="game">
-        <input type="text" id="word-input" maxlength="5" placeholder="Enter your guess">
-        <button onclick="submitWord()">Submit</button>
-        <div id="result"></div>
-    </div>
+    <h1>Wordle Model Visualization</h1>
+    <button onclick="startNewGame()">Start New Game</button>
+    <button onclick="autoPlay()">Auto Play</button>
+    <div id="target-word"></div>
+    <div id="game-log"></div>
 
     <script>
-        async function submitWord() {
-            const word = document.getElementById('word-input').value;
-            const response = await fetch('/attempt', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ word })
+        function startNewGame() {
+            fetch('/new_game')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('game-log').innerHTML = "<p>New game started!</p>";
+                    document.getElementById('target-word').innerHTML = "";
+                });
+        }
+
+        function autoPlay() {
+            fetch('/auto_play', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                const log = document.getElementById('game-log');
+                const target = document.getElementById('target-word');
+                
+                // Show the target word
+                if (data.length > 0) {
+                    target.innerHTML = `<p>Target Word: <strong>${data[0].target_word}</strong></p>`;
+                }
+
+                data.forEach(entry => {
+                    let resultText = '<p class="guess">';
+                    entry.status.forEach(letter => {
+                        let className = '';
+                        if (letter.status === 2) {
+                            className = 'correct';
+                        } else if (letter.status === 1) {
+                            className = 'present';
+                        } else {
+                            className = 'absent';
+                        }
+                        resultText += `<span class="letter ${className}">${letter.char}</span>`;
+                    });
+                    resultText += ` - ${entry.success ? "Success" : "Failed"}</p>`;
+                    log.innerHTML += resultText;
+                });
+                log.scrollTop = log.scrollHeight;
             });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                const resultDiv = document.getElementById('result');
-                let resultHtml = '<p>';
-                for (let [char, status] of data.result) {
-                    resultHtml += `<span class="status-${status}">${char}</span> `;
-                }
-                resultHtml += '</p>';
-                resultDiv.innerHTML += resultHtml;
-
-                if (data.game_over) {
-                    resultDiv.innerHTML += `<p>Game Over! The word was ${wordle_game.target_word}.</p>`;
-                    document.getElementById('word-input').disabled = true;
-                }
-            } else {
-                alert(data.error);
-            }
-
-            document.getElementById('word-input').value = '';
         }
     </script>
 </body>

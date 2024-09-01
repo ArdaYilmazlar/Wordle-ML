@@ -36,7 +36,7 @@ def main(verbose=True):
     agent = WordleAgent(state_size=state_size, action_size=action_size, seed=0)
     
     # Define the number of episodes for training
-    num_episodes = 5000
+    num_episodes = 10000
     
     # Lists to track rewards, success counts, and guess counts
     rewards = []
@@ -51,6 +51,7 @@ def main(verbose=True):
         total_reward = 0
         success = False
         guess_count = 0
+        
         for t in range(env.max_attempts):
             # Agent selects an action based on the current state
             action = agent.act(state)
@@ -67,8 +68,10 @@ def main(verbose=True):
             guess_count += 1
             
             # Check if the agent successfully guessed the word
-            if done and reward > 0:
-                success = True
+            if done:
+                # Success if the guessed word matches the target word
+                if reward > 0 and next_state.tolist().count(2) == len(env.word_list[0]):
+                    success = True
                 break
         
         # Record the total reward, success, and number of guesses for this episode
@@ -79,7 +82,7 @@ def main(verbose=True):
         # Decay the exploration rate (epsilon) after each episode
         agent.decay_epsilon()
 
-        if i_episode % 500 == 0:
+        if i_episode % 5000 == 0:
             snapshot_dir = os.path.join(save_dir, f"step_{i_episode}")
             os.makedirs(snapshot_dir, exist_ok=True)
             torch.save(agent.qnetwork_local.state_dict(), os.path.join(snapshot_dir, "qnetwork_local.pth"))
@@ -108,11 +111,8 @@ def plot_results(successes, guess_counts):
         success_rate = sum(successes[i:i + 100]) / 100 * 100
         success_rate_percentages.append(success_rate)
     
-    # Calculate average guesses per success
-    average_guesses = []
+    # Filter out the guess counts for successful episodes only
     successful_guess_counts = [g for g in guess_counts if g is not None]
-    for i in range(1, len(successful_guess_counts) + 1):
-        average_guesses.append(sum(successful_guess_counts[:i]) / i)
     
     plt.figure(figsize=(12, 5))
 
@@ -124,13 +124,14 @@ def plot_results(successes, guess_counts):
     plt.title("Success Rate (%) per 100 Episodes")
     plt.legend()
 
-    # Plot average guesses per successful episode
+    # Plot distribution of guesses required in successful episodes
     plt.subplot(1, 2, 2)
-    plt.plot(range(1, len(average_guesses) + 1), average_guesses, label="Average Guesses per Success", color="orange")
-    plt.xlabel("Successful Episodes")
-    plt.ylabel("Average Guesses")
-    plt.title("Average Guesses per Success")
-    plt.legend()
+    plt.hist(successful_guess_counts, bins=range(1, max(successful_guess_counts)+2), alpha=0.75, color="blue", edgecolor="black")
+    plt.xlabel("Number of Guesses")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of Guesses per Successful Episode")
+    plt.xticks(range(1, max(successful_guess_counts)+1))
+    plt.legend(["Guesses Distribution"])
 
     plt.tight_layout()
     plt.show()
