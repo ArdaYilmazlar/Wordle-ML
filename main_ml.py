@@ -1,9 +1,27 @@
 from wordle_env import WordleEnv
 from wordle_agent import WordleAgent
+import os
+from datetime import datetime
+import torch
+import config
+
+def load_words(file_name):
+    with open(file_name, 'r') as file:
+        words = [line.strip() for line in file]
+        return words
+
 
 def main():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    
+    start_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+    save_dir = os.path.join("saved_models", start_time)
+    os.makedirs(save_dir, exist_ok=True)
+    print(f"Saving models to directory: {save_dir}")
+
     # Define the word list for the Wordle game
-    word_list = ['apple', 'grape', 'berry', 'melon', 'lemon']
+    word_list = load_words(config.VALID_WORDS_FILE_NAME)
     
     # Initialize the Wordle environment
     env = WordleEnv(word_list)
@@ -44,7 +62,12 @@ def main():
         
         # Decay the exploration rate (epsilon) after each episode
         agent.decay_epsilon()
-        
+        if i_episode % 500 == 0:
+            snapshot_dir = os.path.join(save_dir, f"step_{i_episode}")
+            os.makedirs(snapshot_dir, exist_ok=True)
+            torch.save(agent.qnetwork_local.state_dict(), os.path.join(snapshot_dir, "qnetwork_local.pth"))
+            torch.save(agent.qnetwork_target.state_dict(), os.path.join(snapshot_dir, "qnetwork_target.pth"))
+            print(f"Saved model snapshot at episode {i_episode} in {snapshot_dir}")
         # Output training progress
         print(f"Episode {i_episode}, Total Reward: {total_reward}")
         

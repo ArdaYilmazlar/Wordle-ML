@@ -4,7 +4,6 @@ import torch.optim as optim
 import random
 import numpy as np
 from collections import deque
-from wordle_env import WordleEnv
 
 class QNetwork(nn.Module):
     def __init__(self, state_size, action_size, seed):
@@ -24,10 +23,13 @@ class WordleAgent:
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
+        
+        # Use CUDA if available
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Q-Network
-        self.qnetwork_local = QNetwork(state_size, action_size, seed)
-        self.qnetwork_target = QNetwork(state_size, action_size, seed)
+        self.qnetwork_local = QNetwork(state_size, action_size, seed).to(self.device)
+        self.qnetwork_target = QNetwork(state_size, action_size, seed).to(self.device)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=0.001)
 
         # Replay memory
@@ -53,7 +55,7 @@ class WordleAgent:
     def act(self, state):
         # Epsilon-greedy action selection
         if random.random() > self.epsilon:
-            state = torch.from_numpy(state).float().unsqueeze(0)
+            state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
             with torch.no_grad():
                 action_values = self.qnetwork_local(state)
             return np.argmax(action_values.cpu().data.numpy())
@@ -63,11 +65,11 @@ class WordleAgent:
     def learn(self, experiences):
         states, actions, rewards, next_states, dones = zip(*experiences)
 
-        states = torch.FloatTensor(states)
-        actions = torch.LongTensor(actions).unsqueeze(1)
-        rewards = torch.FloatTensor(rewards).unsqueeze(1)
-        next_states = torch.FloatTensor(next_states)
-        dones = torch.FloatTensor(dones).unsqueeze(1)
+        states = torch.FloatTensor(np.array(states)).to(self.device)
+        actions = torch.LongTensor(np.array(actions)).unsqueeze(1).to(self.device)
+        rewards = torch.FloatTensor(np.array(rewards)).unsqueeze(1).to(self.device)
+        next_states = torch.FloatTensor(np.array(next_states)).to(self.device)
+        dones = torch.FloatTensor(np.array(dones)).unsqueeze(1).to(self.device)
 
         # Get the expected Q values from local model
         Q_expected = self.qnetwork_local(states).gather(1, actions)
@@ -93,29 +95,3 @@ class WordleAgent:
 
     def decay_epsilon(self):
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-
-# Example usage
-if __name__ == "__main__":
-    word_list = ['apple', 'grape', 'berry', 'melon', 'lemon']
-    env = WordleEnv(word_list)
-    agent = WordleAgent(state_size=5, action_size=len(word_list), seed=0)
-    
-    num_episodes = 1000
-    for i_episode in range(1, num_episodes+1):
-        state = env.reset()[0]  # Gymnasium returns (observation, info), so take the first element
-        total_reward = 0
-        for t in range(env.max_attempts):
-            action = agent.act(state)
-            next_state, reward, done, _, _ = env.step(action)
-            agent.step(state, action, reward, next_state, done)
-            state = next_state
-            total_reward += reward
-            if done:
-                break
-        agent.decay_epsilon()
-        print(f"Episode {i_episode}, Total Reward: {total_reward}")
-
-        if i_episode % 100 == 0:
-            print(f"Episode {i_episode}: Epsilon = {agent.epsilon}")
-
-    print("Training complete!")

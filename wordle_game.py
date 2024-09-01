@@ -26,7 +26,6 @@ class WordleGame:
             raise ValueError(f"'{attempted_word}' have been guessed before.")
         """
         
-        
         result: List[Tuple[str, int]] = list()
         
         for i, char in enumerate(attempted_word):
