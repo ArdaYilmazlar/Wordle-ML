@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Wordle Game</h1>
+    <div id="game">
+        <input type="text" id="word-input" maxlength="5" placeholder="Enter your guess">
+        <button onclick="submitWord()">Submit</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function submitWord() {
+            const word = document.getElementById('word-input').value;
+            const response = await fetch('/attempt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ word })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const resultDiv = document.getElementById('result');
+                let resultHtml = '';
+                for (let [char, status] of Object.entries(data.result)) {
+                    resultHtml += `<span class="status-${status}">${char}</span> `;
+                }
+                resultDiv.innerHTML += `<p>${resultHtml}</p>`;
+
+                if (data.game_over) {
+                    resultDiv.innerHTML += `<p>Game Over! The word was ${word}.</p>`;
+                    document.getElementById('word-input').disabled = true;
+                }
+            } else {
+                alert(data.error);
+            }
+
+            document.getElementById('word-input').value = '';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+}
+
+#word-input {
+    padding: 5px;
+    font-size: 16px;
+    width: 200px;
+}
+
+button {
+    padding: 5px 10px;
+    font-size: 16px;
+}
+
+#result {
+    margin-top: 20px;
+}
+
+.status-2 {
+    color: green;
+    font-weight: bold;
+}
+
+.status-1 {
+    color: orange;
+}
+
+.status-0 {
+    color: gray;
+}
