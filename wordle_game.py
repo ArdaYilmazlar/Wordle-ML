@@ -16,13 +16,17 @@ class WordleGame:
         self.max_attempts = max_attempts
     
     def _select_random_word(self) -> str:
-        return self.word_list[randint(0, len(self.word_list))]
+        print("word list len" + str(len(self.word_list)))
+        return self.word_list[randint(0, len(self.word_list) - 1)]
     
     def make_attempt(self, attempted_word: str) -> List[Tuple[str, int]]:
         if attempted_word not in self.word_list:
             raise ValueError(f"'{attempted_word}' is not a valid word.")
+        """
         elif attempted_word in self.attempts:
             raise ValueError(f"'{attempted_word}' have been guessed before.")
+        """
+        
         
         result: List[Tuple[str, int]] = list()
         
