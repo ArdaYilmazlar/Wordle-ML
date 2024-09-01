@@ -29,14 +29,15 @@
 
             if (response.ok) {
                 const resultDiv = document.getElementById('result');
-                let resultHtml = '';
-                for (let [char, status] of Object.entries(data.result)) {
+                let resultHtml = '<p>';
+                for (let [char, status] of data.result) {
                     resultHtml += `<span class="status-${status}">${char}</span> `;
                 }
-                resultDiv.innerHTML += `<p>${resultHtml}</p>`;
+                resultHtml += '</p>';
+                resultDiv.innerHTML += resultHtml;
 
                 if (data.game_over) {
-                    resultDiv.innerHTML += `<p>Game Over! The word was ${word}.</p>`;
+                    resultDiv.innerHTML += `<p>Game Over! The word was ${wordle_game.target_word}.</p>`;
                     document.getElementById('word-input').disabled = true;
                 }
             } else {
