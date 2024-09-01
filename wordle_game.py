@@ -1,4 +1,4 @@
-from random import randint
+from random import choice
 from typing import List, Tuple
 from enums import GuessStatus
 
@@ -16,7 +16,7 @@ class WordleGame:
         self.max_attempts = max_attempts
     
     def _select_random_word(self) -> str:
-        return self.word_list[randint(0, len(self.word_list) - 1)]
+        return choice(self.word_list)
     
     def make_attempt(self, attempted_word: str) -> List[Tuple[str, int]]:
         if attempted_word not in self.word_list:
