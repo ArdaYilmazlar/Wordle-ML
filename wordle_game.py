@@ -16,7 +16,6 @@ class WordleGame:
         self.max_attempts = max_attempts
     
     def _select_random_word(self) -> str:
-        print("word list len" + str(len(self.word_list)))
         return self.word_list[randint(0, len(self.word_list) - 1)]
     
     def make_attempt(self, attempted_word: str) -> List[Tuple[str, int]]:
