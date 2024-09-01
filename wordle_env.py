@@ -46,19 +46,25 @@ class WordleEnv(gym.Env):
     def calculate_reward(self, result):
         reward = 0.0
         
+        # Reward based on the status of each character
         for char, status in result:
             if status == GuessStatus.CORRECT.value:
                 reward += 1.0  # High reward for correct letters
             elif status == GuessStatus.PRESENT.value:
                 reward += 0.5  # Medium reward for present letters
             else:
-                reward -= 0.2  # Penalty for absent letters
-        reward -= len(self.guess_status_history) * 2
-        # Additional reward if the word is completely correct
+                reward -= 0.1  # Smaller penalty for absent letters to not be too discouraging
+        
+        # Penalty for the number of guesses made so far (encourages faster guessing)
+        reward -= len(self.guess_status_history) * 0.1
+        
+        # Large reward for guessing the entire word correctly, scaled by how quickly it was found
         if all(status == GuessStatus.CORRECT.value for _, status in result):
-            reward += 5.0  * (6 - len(self.guess_status_history)) # Large reward for guessing the entire word correctly
+            remaining_attempts = 7 - len(self.guess_status_history)  # Assuming max 6 attempts
+            reward += 5.0 * (1 + remaining_attempts * 0.5)  # Scaled reward to emphasize early success
         
         return reward
+
 
     def _get_observation(self):
         # Create an observation with the history of guesses and their statuses
