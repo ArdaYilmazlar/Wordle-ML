@@ -38,9 +38,10 @@ def main(verbose=True):
     # Define the number of episodes for training
     num_episodes = 5000
     
-    # Lists to track rewards and success
+    # Lists to track rewards, success counts, and guess counts
     rewards = []
     successes = []
+    guess_counts = []
 
     # Training loop
     for i_episode in range(1, num_episodes + 1):
@@ -49,6 +50,7 @@ def main(verbose=True):
         
         total_reward = 0
         success = False
+        guess_count = 0
         for t in range(env.max_attempts):
             # Agent selects an action based on the current state
             action = agent.act(state)
@@ -62,15 +64,17 @@ def main(verbose=True):
             # Move to the next state
             state = next_state
             total_reward += reward
+            guess_count += 1
             
             # Check if the agent successfully guessed the word
             if done and reward > 0:
                 success = True
                 break
         
-        # Record the total reward and success for this episode
+        # Record the total reward, success, and number of guesses for this episode
         rewards.append(total_reward)
         successes.append(success)
+        guess_counts.append(guess_count if success else None)
 
         # Decay the exploration rate (epsilon) after each episode
         agent.decay_epsilon()
@@ -93,32 +97,43 @@ def main(verbose=True):
     print("Training complete!")
 
     # Plot the results
-    plot_results(rewards, successes)
+    plot_results(successes, guess_counts)
 
-def plot_results(rewards, successes):
-    episodes = range(1, len(rewards) + 1)
-    success_rate = [sum(successes[:i]) / i for i in range(1, len(successes) + 1)]
+def plot_results(successes, guess_counts):
+    episodes = range(1, len(successes) + 1)
+    
+    # Calculate success rate in percentages for every 100 episodes
+    success_rate_percentages = []
+    for i in range(0, len(successes), 100):
+        success_rate = sum(successes[i:i + 100]) / 100 * 100
+        success_rate_percentages.append(success_rate)
+    
+    # Calculate average guesses per success
+    average_guesses = []
+    successful_guess_counts = [g for g in guess_counts if g is not None]
+    for i in range(1, len(successful_guess_counts) + 1):
+        average_guesses.append(sum(successful_guess_counts[:i]) / i)
     
     plt.figure(figsize=(12, 5))
 
-    # Plot total reward per episode
+    # Plot success rate over episodes (as percentage)
     plt.subplot(1, 2, 1)
-    plt.plot(episodes, rewards, label="Total Reward")
-    plt.xlabel("Episode")
-    plt.ylabel("Total Reward")
-    plt.title("Total Reward per Episode")
+    plt.plot(range(1, len(success_rate_percentages) + 1), success_rate_percentages, label="Success Rate (%)", color="green")
+    plt.xlabel("Episode Batches (100 per batch)")
+    plt.ylabel("Success Rate (%)")
+    plt.title("Success Rate (%) per 100 Episodes")
     plt.legend()
 
-    # Plot success rate over episodes
+    # Plot average guesses per successful episode
     plt.subplot(1, 2, 2)
-    plt.plot(episodes, success_rate, label="Success Rate", color="orange")
-    plt.xlabel("Episode")
-    plt.ylabel("Success Rate")
-    plt.title("Success Rate over Time")
+    plt.plot(range(1, len(average_guesses) + 1), average_guesses, label="Average Guesses per Success", color="orange")
+    plt.xlabel("Successful Episodes")
+    plt.ylabel("Average Guesses")
+    plt.title("Average Guesses per Success")
     plt.legend()
 
     plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
-    main(verbose=False)  # Set verbose=False to disable print statements
+    main(verbose=True)  # Set verbose=False to disable print statements

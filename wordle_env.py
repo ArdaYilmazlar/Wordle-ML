@@ -53,10 +53,10 @@ class WordleEnv(gym.Env):
                 reward += 0.5  # Medium reward for present letters
             else:
                 reward -= 0.2  # Penalty for absent letters
-
+        reward -= len(self.guess_status_history) * 2
         # Additional reward if the word is completely correct
         if all(status == GuessStatus.CORRECT.value for _, status in result):
-            reward += 5.0  # Large reward for guessing the entire word correctly
+            reward += 5.0  * (6 - len(self.guess_status_history)) # Large reward for guessing the entire word correctly
         
         return reward
 
