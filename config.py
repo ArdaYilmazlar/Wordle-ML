@@ -1,0 +1,1 @@
+VALID_WORDS_FILE_NAME = "wordle_valid_words.txt"

@@ -20,9 +20,9 @@ class WordleGame:
     
     def make_attempt(self, attempted_word: str) -> Dict[str, int]:
         if attempted_word not in self.word_list:
-            raise ValueError("'{attempted_word}' is not a valid word.")
+            raise ValueError(f"'{attempted_word}' is not a valid word.")
         elif attempted_word in self.attempts:
-            raise ValueError("'{attempted_word}' have been guessed before.")
+            raise ValueError(f"'{attempted_word}' have been guessed before.")
         
         result: Dict[str, int] = dict()
         
